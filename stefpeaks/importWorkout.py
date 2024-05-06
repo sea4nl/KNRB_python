@@ -43,6 +43,8 @@ def cleanUpCsv():
     workoutFolder = 'workouts'
     workoutFiles = os.listdir(workoutFolder)
     for file in workoutFiles:
+        if file == '.gitkeep':
+            continue
         if file[-3:] == 'zip':
             name = file[:-3]
             print(f"Found {file}.zip, unzipping csv (don't do this manually!)")
@@ -59,6 +61,8 @@ def getNames():
         return e.split(' ')[1]
     names = []
     for file in workoutFiles:
+        if file == '.gitkeep':
+            continue
         split = file.split('-')
         name = f'{split[2]} {split[1]}'
         if name not in names:
