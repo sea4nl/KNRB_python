@@ -1,0 +1,6 @@
+*.csv
+*.xlsx
+plots/
+workouts/
+.legacy/
+__pycache__/
