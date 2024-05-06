@@ -1,6 +1,5 @@
 *.csv
+*.html
 *.xlsx
-plots/
-workouts/
 .legacy/
 __pycache__/
