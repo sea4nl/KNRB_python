@@ -8,6 +8,12 @@ Installeer eerst python (of anaconda) op je pc. Als het goed is moet je nu in ee
 `$ pip install -r requirements.txt`
 Hiermee installeer je alle libraries die nodig zijn.
 
+## Dit script installeren
+
+Dit script staat gehost op github.com. De toegevoegde waarde van git is dat het een handige plek is om code op te slaan en up-to-date te houden. Ook zit er versiebeheer in en is het makkelijk voor meerdere mensen om er mee samen te werken. De reden dat ik er voor heb gekozen om dit te gebruiken is dan ook zodat ik jullie niet de hele tijd de code hoef op te sturen als er kleine wijzigingen zijn geweest, je kan gewoon zelf de nieuwe code er af halen.
+
+Om het script op je laptop te krijgen kan je twee dingen doen. De eerste optie is om git te installeren. Dit is wel meteen wat ambitieus maar maakt het proces later een stuk makkelijker. De tweede optie is om hier rechtsboven naar de groene knop met ' <> Code' te gaan en daar op te klikken. In het dropdown menu kan je dan de code als een .zip bestand downloaden.  
+
 ## CSV Lezer
 
 Om TP files te analyzeren moet je inloggen op TP en daar in de settings 'Workout Summaries' exporteren. Deze horen dan thuis in de 'workouts' map. Laat deze files als een .zip bestand staan, de loader maakt er automatisch csv documenten van.
