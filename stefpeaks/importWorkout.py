@@ -4,8 +4,12 @@ import os
 from zipfile import ZipFile
 
 import stefpeaks.conversion_factors
+import stefpeaks.t2min
 
 cf = stefpeaks.conversion_factors.cf
+t2min_tz = stefpeaks.t2min.t2min_tz
+t2min_cf = stefpeaks.t2min.t2min_cf
+
 workoutFolder = 'workouts'
 
 def calculateTSS(row):
@@ -36,6 +40,45 @@ def calculateTSS(row):
     if wt == 'Walk':
         return tss * cf['hiking']
     return tss
+
+def baseT2min(row):
+    t2min = 0
+    
+    t2tz = list(t2min_tz.values())
+    zones = [ f"HRZone{hrz}Minutes" for hrz in list(range(1,6))]
+    
+    for i, zone in enumerate(zones):
+        t2min = t2min + row[zone] * t2tz[i]
+    
+    return t2min
+
+def calculateT2min(row):
+
+    t2min =  baseT2min(row)
+    wt = row['WorkoutType']
+
+    if wt == 'Strength':
+        return row['TSS'] * t2min_cf['strength'] # take the TSS for now!
+    if wt == 'Day Off':
+        return t2min
+    if wt == 'Rowing':
+        if row['DistanceInMeters'] > 0:
+            return t2min * t2min_cf['rowing']
+        else:
+            return t2min * t2min_cf['indoor rowing']
+    if wt == 'Bike':
+        if row['DistanceInMeters'] > 0:
+            return t2min * t2min_cf['cycling']
+        else:
+            return t2min * t2min_cf['indoor cycling']
+    if wt == 'Other':
+        if row['Title'] == "Alpine Skiing":
+            return t2min * t2min_cf['alpine skiing']
+        else:
+            return t2min * t2min_cf['other']
+    if wt == 'Walk':
+        return t2min * t2min_cf['hiking']
+    return t2min
 
 
 def cleanUpCsv():
@@ -135,11 +178,14 @@ def importWorkout(name: str):
     # Make a new dataframe which is one row per day, instead of per workout
     workoutDays = []
     ctss = [] # Converted TSS (with conversion factor)
+    t2min = []
     for i, row in workoutsDataFrame.iterrows():
         workoutDays.append(datetime.datetime.strptime(row['WorkoutDay'],'%Y-%m-%d')) 
         ctss.append(calculateTSS(row))
+        t2min.append(calculateT2min(row))
     workoutsDataFrame['WorkoutDatetime'] = workoutDays
     workoutsDataFrame['CTSS'] = ctss
+    workoutsDataFrame['T2MIN'] = t2min
 
 
     workoutsDataFrame= workoutsDataFrame.sort_values(by='WorkoutDatetime', ascending=False)
@@ -154,6 +200,7 @@ def importWorkout(name: str):
     TSSDataFrame = daysDataFrame.copy()
     TSS = []
     CTSS = []
+    T2MIN = []
     RowHours = []
     PlannedRowHours = []
     BikeHours = []
@@ -166,6 +213,7 @@ def importWorkout(name: str):
     for i, row in TSSDataFrame.iterrows():
         tss = workoutsDataFrame[workoutsDataFrame['WorkoutDay'] == i.strftime('%Y-%m-%d')]['TSS'].sum()
         ctss = workoutsDataFrame[workoutsDataFrame['WorkoutDay'] == i.strftime('%Y-%m-%d')]['CTSS'].sum()
+        t2min = workoutsDataFrame[workoutsDataFrame['WorkoutDay'] == i.strftime('%Y-%m-%d')]['T2MIN'].sum()
 
         RH, PRH, BH, PBH, OH, SH = summarizeDay(wf[wf['WorkoutDay'] == i.strftime('%Y-%m-%d')])
         RowHours.append(RH)
@@ -177,6 +225,7 @@ def importWorkout(name: str):
 
         TSS.append(tss)
         CTSS.append(ctss)
+        T2MIN.append(t2min)
 
     TSSDataFrame['TSS'] = TSS
     TSSDataFrame['CTL'] = TSSDataFrame["TSS"].rolling(pd.Timedelta(42,"D")).mean()
@@ -186,6 +235,10 @@ def importWorkout(name: str):
     TSSDataFrame['CCTL'] = TSSDataFrame["CTSS"].rolling(pd.Timedelta(42,"D")).mean()
     TSSDataFrame['CATL'] = TSSDataFrame["CTSS"].rolling(pd.Timedelta(7,"D")).mean()
     TSSDataFrame['CTSB'] = TSSDataFrame['CCTL'] - TSSDataFrame['CATL']
+    TSSDataFrame['T2MIN'] = T2MIN
+    TSSDataFrame['T2CTL'] = TSSDataFrame["T2MIN"].rolling(pd.Timedelta(42,"D")).mean()
+    TSSDataFrame['T2ATL'] = TSSDataFrame["T2MIN"].rolling(pd.Timedelta(7,"D")).mean()
+    TSSDataFrame['T2TSB'] = TSSDataFrame['T2CTL'] - TSSDataFrame['T2ATL']
 
     TSSDataFrame['RowHours'] = RowHours
     TSSDataFrame['PlannedRowHours'] = PlannedRowHours
